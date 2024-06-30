@@ -1,0 +1,13 @@
+Current to-dos:
+    - Implement logic for castling
+    - Implement logic for check and checkmate
+    - Implement logic for en-passant
+    - Switch to lighter piece representation - don't need rank/file/value
+    - Try to make it so board doesn't get copied every time
+    - Update evaluation function to include the following:
+        - Pawn structure: Passed, isolated, doubled
+        - King safety
+        - Piece activity
+    - Implement a positions cache (as a hashmap)
+    - Implement move ordering
+        - Checks, captures, threats, in that order
