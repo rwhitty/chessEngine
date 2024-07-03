@@ -75,4 +75,5 @@ public class Board {
         newBoard.whiteTurn = this.whiteTurn;
         return newBoard;
     }
+
 }
