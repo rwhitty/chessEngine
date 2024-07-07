@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class newEngine {
     public newBoard board;
-    public static int maxDepth = 5;
+    public static int maxDepth = 6;
 
     public newEngine() {
         this.board = new newBoard();
@@ -16,10 +16,14 @@ public class newEngine {
         int oldRank = Character.getNumericValue(moveString.charAt(1)) - 1;
         int newFile = (int) moveString.charAt(2) - 97;
         int newRank = Character.getNumericValue(moveString.charAt(3)) - 1;
-        this.board.pieces[newFile][newRank] = this.board.pieces[oldFile][oldRank];
-        this.board.pieces[oldFile][oldRank] = 0;
-        this.board.colors[newFile][newRank] = this.board.colors[oldFile][oldRank];
-        this.board.colors[oldFile][oldRank] = 0;
+        this.board.doMove(new newMove(oldFile, oldRank, newFile, newRank));
+    }
+
+    public String makeMove() {
+        newMove bestMove = getBestMove(maxDepth, -10000, 10000);
+        this.board.doMove(bestMove);
+        return (char) (bestMove.oldFile + 97) + Integer.toString(bestMove.oldRank + 1) +
+                " -> " + (char) (bestMove.newFile + 97) + Integer.toString(bestMove.newRank + 1);
     }
 
     public newMove getBestMove(int depth, double alpha, double beta) {
@@ -43,6 +47,13 @@ public class newEngine {
                 char capturedColor = this.board.getColor(move.newFile, move.newRank);
                 this.board.doMove(move);
                 newMove currMove = getBestMove(depth - 1, alpha, beta);
+
+                this.board.whiteTurn = true;
+                this.board.pieces[move.oldFile][move.oldRank] = movingPiece;
+                this.board.colors[move.oldFile][move.oldRank] = movingColor;
+                this.board.pieces[move.newFile][move.newRank] = capturedPiece;
+                this.board.colors[move.newFile][move.newRank] = capturedColor;
+
                 if (bestMove == null || currMove.evaluation > bestMove.evaluation) {
                     bestMove = move;
                     bestMove.evaluation = currMove.evaluation;
@@ -52,10 +63,6 @@ public class newEngine {
                 } else if (bestMove.evaluation > alpha) {
                     alpha = bestMove.evaluation;
                 }
-                this.board.pieces[move.oldFile][move.oldRank] = movingPiece;
-                this.board.colors[move.oldFile][move.oldRank] = movingColor;
-                this.board.pieces[move.newFile][move.newRank] = capturedPiece;
-                this.board.colors[move.newFile][move.newRank] = capturedColor;
             }
         } else {
             moves = this.board.getMoves('B');
@@ -66,6 +73,13 @@ public class newEngine {
                 char capturedColor = this.board.getColor(move.newFile, move.newRank);
                 this.board.doMove(move);
                 newMove currMove = getBestMove(depth - 1, alpha, beta);
+
+                this.board.whiteTurn = false;
+                this.board.pieces[move.oldFile][move.oldRank] = movingPiece;
+                this.board.colors[move.oldFile][move.oldRank] = movingColor;
+                this.board.pieces[move.newFile][move.newRank] = capturedPiece;
+                this.board.colors[move.newFile][move.newRank] = capturedColor;
+
                 if (bestMove == null || currMove.evaluation < bestMove.evaluation) {
                     bestMove = move;
                     bestMove.evaluation = currMove.evaluation;
@@ -75,18 +89,40 @@ public class newEngine {
                 } else if (bestMove.evaluation < beta) {
                     beta = bestMove.evaluation;
                 }
-                this.board.pieces[move.oldFile][move.oldRank] = movingPiece;
-                this.board.colors[move.oldFile][move.oldRank] = movingColor;
-                this.board.pieces[move.newFile][move.newRank] = capturedPiece;
-                this.board.colors[move.newFile][move.newRank] = capturedColor;
             }
         }
-
         return bestMove;
     }
 
 
     public double evaluateBoard(newBoard board) {
-        return 0;
+        double evaluation = 0;
+        for (int file = 0; file < 8; file++) {
+            for (int rank = 0; rank < 8; rank++) {
+                evaluation += board.evaluatePiece(file, rank);
+            }
+        }
+
+        evaluation += 0.04 * board.getMoves('W').size();
+        evaluation -= 0.04 * board.getMoves('B').size();
+
+        if (board.whiteTurn) {
+            evaluation += 0.2;
+        } else {
+            evaluation -= 0.2;
+        }
+
+        for (int file = 3; file < 5; file++) {
+            for (int rank = 3; rank < 5; rank++) {
+                if (board.getColor(file, rank) == 'W') {
+                    evaluation += 0.1;
+                } else if (board.getColor(file, rank) == 'B') {
+                    evaluation -= 0.1;
+                }
+            }
+        }
+
+        return evaluation;
     }
+
 }

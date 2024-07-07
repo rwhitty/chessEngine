@@ -1,7 +1,7 @@
 import java.util.*;
 public class Main {
     public static void main(String[] args) {
-        Engine engine = new Engine();
+        newEngine engine = new newEngine();
 
         Scanner scanner = new Scanner(System.in);
 

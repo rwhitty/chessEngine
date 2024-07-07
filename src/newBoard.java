@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class newBoard {
     public char[][] pieces;
@@ -56,6 +57,7 @@ public class newBoard {
         this.colors[move.newFile][move.newRank] = this.colors[move.oldFile][move.oldRank];
         this.pieces[move.oldFile][move.oldRank] = 0;
         this.colors[move.oldFile][move.oldRank] = 0;
+        this.whiteTurn = !this.whiteTurn;
     }
 
     public double evaluatePiece(int file, int rank) {
@@ -447,6 +449,9 @@ public class newBoard {
         }
 
         // TODO: Implement castling
+        if ((color == 'W' && file == 4 && rank == 0) || (color == 'B' && file == 4 && rank == 7)) {
+            int x = 4;
+        }
 
         return moves;
     }
