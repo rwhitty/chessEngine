@@ -1,6 +1,3 @@
-import board.Move;
-import board.pieces.Piece;
-
 import java.util.ArrayList;
 
 public class newEngine {
@@ -12,24 +9,25 @@ public class newEngine {
     }
 
     public void processMove(String moveString) {
+        // TODO: Implement castling here too
         int oldFile = (int) moveString.charAt(0) - 97;
         int oldRank = Character.getNumericValue(moveString.charAt(1)) - 1;
         int newFile = (int) moveString.charAt(2) - 97;
         int newRank = Character.getNumericValue(moveString.charAt(3)) - 1;
-        this.board.doMove(new newMove(oldFile, oldRank, newFile, newRank));
+        this.board.doMove(new newMove(oldFile, oldRank, newFile, newRank, 'n'));
     }
 
     public String makeMove() {
         newMove bestMove = getBestMove(maxDepth, -10000, 10000);
         this.board.doMove(bestMove);
         return (char) (bestMove.oldFile + 97) + Integer.toString(bestMove.oldRank + 1) +
-                " -> " + (char) (bestMove.newFile + 97) + Integer.toString(bestMove.newRank + 1);
+                " -> " + (char) (bestMove.newFile + 97) + (bestMove.newRank + 1);
     }
 
     public newMove getBestMove(int depth, double alpha, double beta) {
         if (depth <= 0) {
             // This is just a dummy move; all we care about is the evaluation
-            newMove onlyMove = new newMove(0, 0, 0, 0);
+            newMove onlyMove = new newMove(0, 0, 0, 0, 'n');
             onlyMove.evaluation = evaluateBoard(this.board);
             return onlyMove;
         }
@@ -45,6 +43,7 @@ public class newEngine {
                 char movingColor = this.board.getColor(move.oldFile, move.oldRank);
                 char capturedPiece = this.board.getPiece(move.newFile, move.newRank);
                 char capturedColor = this.board.getColor(move.newFile, move.newRank);
+                // TODO: Save other aspects of state, like pieces having moved
                 this.board.doMove(move);
                 newMove currMove = getBestMove(depth - 1, alpha, beta);
 

@@ -5,6 +5,12 @@ public class newBoard {
     public char[][] pieces;
     public char[][] colors;
     public boolean whiteTurn;
+    public boolean whiteKingMoved;
+    public boolean blackKingMoved;
+    public boolean whiteARookMoved;
+    public boolean whiteHRookMoved;
+    public boolean blackARookMoved;
+    public boolean blackHRookMoved;
 
     public newBoard() {
         this.pieces = new char[8][8];
@@ -58,6 +64,20 @@ public class newBoard {
         this.pieces[move.oldFile][move.oldRank] = 0;
         this.colors[move.oldFile][move.oldRank] = 0;
         this.whiteTurn = !this.whiteTurn;
+
+        if (move.oldFile == 0 && move.oldRank == 0) {
+            this.whiteARookMoved = true;
+        } else if (move.oldFile == 0 && move.oldRank == 7) {
+            this.blackARookMoved = true;
+        } else if (move.oldFile == 7 && move.oldRank == 0) {
+            this.whiteHRookMoved = true;
+        } else if (move.oldFile == 7 && move.oldRank == 7) {
+            this.blackHRookMoved = true;
+        } else if (move.oldFile == 4 && move.oldRank == 0) {
+            this.whiteKingMoved = true;
+        } else if (move.oldFile == 4 && move.oldRank == 7) {
+            this.blackKingMoved = true;
+        }
     }
 
     public double evaluatePiece(int file, int rank) {
@@ -115,30 +135,30 @@ public class newBoard {
         if (getColor(file, rank) == 'W') {
             if (rank < 7 && getPiece(file, rank + 1) == 0) {
                 // TODO: Implement promotion
-                moves.add(new newMove(file, rank, file, rank + 1));
+                moves.add(new newMove(file, rank, file, rank + 1, 'n'));
             }
             if (rank == 1 && getPiece(file, rank + 1) == 0 && getPiece(file, rank + 2) == 0) {
-                moves.add(new newMove(file, rank, file, rank + 2));
+                moves.add(new newMove(file, rank, file, rank + 2, 'n'));
             }
             if (rank < 7 && file > 0 && getColor(file - 1, rank + 1) == 'B') {
-                moves.add(new newMove(file, rank, file - 1, rank + 1));
+                moves.add(new newMove(file, rank, file - 1, rank + 1, 'n'));
             }
             if (rank < 7 && file < 7 && getColor(file + 1, rank + 1) == 'B') {
-                moves.add(new newMove(file, rank, file + 1, rank + 1));
+                moves.add(new newMove(file, rank, file + 1, rank + 1, 'n'));
             }
             // TODO: Implement en passant
         } else {
             if (rank > 0 && getPiece(file, rank - 1) == 0) {
-                moves.add(new newMove(file, rank, file, rank - 1));
+                moves.add(new newMove(file, rank, file, rank - 1, 'n'));
             }
             if (rank == 6 && getPiece(file, rank - 1) == 0 && getPiece(file, rank - 2) == 0) {
-                moves.add(new newMove(file, rank, file, rank - 2));
+                moves.add(new newMove(file, rank, file, rank - 2, 'n'));
             }
             if (rank > 0 && file > 0 && getColor(file - 1, rank - 1) == 'W') {
-                moves.add(new newMove(file, rank, file - 1, rank - 1));
+                moves.add(new newMove(file, rank, file - 1, rank - 1, 'n'));
             }
             if (rank > 0 && file < 7 && getColor(file + 1, rank - 1) == 'W') {
-                moves.add(new newMove(file, rank, file + 1, rank - 1));
+                moves.add(new newMove(file, rank, file + 1, rank - 1, 'n'));
             }
         }
 
@@ -152,7 +172,7 @@ public class newBoard {
         // Going up
         for (int dist = 1; rank + dist < 8; dist++) {
             if (getColor(file, rank + dist) != color) {
-                moves.add(new newMove(file, rank, file, rank + dist));
+                moves.add(new newMove(file, rank, file, rank + dist, 'n'));
                 if (getColor(file, rank + dist) != 0) {
                     break;
                 }
@@ -164,7 +184,7 @@ public class newBoard {
         // Going right
         for (int dist = 1; file + dist < 8; dist++) {
             if (getColor(file + dist, rank) != color) {
-                moves.add(new newMove(file, rank, file + dist, rank));
+                moves.add(new newMove(file, rank, file + dist, rank, 'n'));
                 if (getColor(file + dist, rank) != 0) {
                     break;
                 }
@@ -176,7 +196,7 @@ public class newBoard {
         // Going down
         for (int dist = 1; rank - dist >= 0; dist++) {
             if (getColor(file, rank - dist) != color) {
-                moves.add(new newMove(file, rank, file, rank - dist));
+                moves.add(new newMove(file, rank, file, rank - dist, 'n'));
                 if (getColor(file, rank - dist) != 0) {
                     break;
                 }
@@ -188,7 +208,7 @@ public class newBoard {
         // Going left
         for (int dist = 1; file - dist >= 0; dist++) {
             if (getColor(file - dist, rank) != color) {
-                moves.add(new newMove(file, rank, file - dist, rank));
+                moves.add(new newMove(file, rank, file - dist, rank, 'n'));
                 if (getColor(file - dist, rank) != 0) {
                     break;
                 }
@@ -205,42 +225,42 @@ public class newBoard {
         char color = getColor(file, rank);
         // Going up-up-right
         if (file + 1 < 8 && rank + 2 < 8 && getColor(file + 1, rank + 2) != color) {
-            moves.add(new newMove(file, rank, file + 1, rank + 2));
+            moves.add(new newMove(file, rank, file + 1, rank + 2, 'n'));
         }
 
         // Going up-right-right
         if (file + 2 < 8 && rank + 1 < 8 && getColor(file + 2, rank + 1) != color) {
-            moves.add(new newMove(file, rank, file + 2, rank + 1));
+            moves.add(new newMove(file, rank, file + 2, rank + 1, 'n'));
         }
 
         // Going down-right-right
         if (file + 2 < 8 && rank - 1 >= 0 && getColor(file + 2, rank - 1) != color) {
-            moves.add(new newMove(file, rank, file + 2, rank - 1));
+            moves.add(new newMove(file, rank, file + 2, rank - 1, 'n'));
         }
 
         // Going down-down-right
         if (file + 1 < 8 && rank - 2 >= 0 && getColor(file + 1, rank - 2) != color) {
-            moves.add(new newMove(file, rank, file + 1, rank - 2));
+            moves.add(new newMove(file, rank, file + 1, rank - 2, 'n'));
         }
 
         // Going down-down-left
         if (file - 1 >= 0 && rank - 2 >= 0 && getColor(file - 1, rank - 2) != color) {
-            moves.add(new newMove(file, rank, file - 1, rank - 2));
+            moves.add(new newMove(file, rank, file - 1, rank - 2, 'n'));
         }
 
         // Going down-left-left
         if (file - 2 >= 0 && rank - 1 >= 0 && getColor(file - 2, rank - 1) != color) {
-            moves.add(new newMove(file, rank, file - 2, rank - 1));
+            moves.add(new newMove(file, rank, file - 2, rank - 1, 'n'));
         }
 
         // Going up-left-left
         if (file - 2 >= 0 && rank + 1 < 8 && getColor(file - 2, rank + 1) != color) {
-            moves.add(new newMove(file, rank, file - 2, rank + 1));
+            moves.add(new newMove(file, rank, file - 2, rank + 1, 'n'));
         }
 
         // Going up-up-left
         if (file - 1 >= 0 && rank + 2 < 8 && getColor(file - 1, rank + 2) != color) {
-            moves.add(new newMove(file, rank, file - 1, rank + 2));
+            moves.add(new newMove(file, rank, file - 1, rank + 2, 'n'));
         }
 
         return moves;
@@ -253,7 +273,7 @@ public class newBoard {
         // Going up-right
         for (int dist = 1; file + dist < 8 && rank + dist < 8; dist++) {
             if (getColor(file + dist, rank + dist) != color) {
-                moves.add(new newMove(file, rank, file + dist, rank + dist));
+                moves.add(new newMove(file, rank, file + dist, rank + dist, 'n'));
                 if (getColor(file + dist, rank + dist) != 0) {
                     break;
                 }
@@ -265,7 +285,7 @@ public class newBoard {
         // Going down-right
         for (int dist = 1; file + dist < 8 && rank - dist >= 0; dist++) {
             if (getColor(file + dist, rank - dist) != color) {
-                moves.add(new newMove(file, rank, file + dist, rank - dist));
+                moves.add(new newMove(file, rank, file + dist, rank - dist, 'n'));
                 if (getColor(file + dist, rank - dist) != 0) {
                     break;
                 }
@@ -277,7 +297,7 @@ public class newBoard {
         // Going down-left
         for (int dist = 1; file - dist >= 0 && rank - dist >= 0; dist++) {
             if (getColor(file - dist, rank - dist) != color) {
-                moves.add(new newMove(file, rank, file - dist, rank - dist));
+                moves.add(new newMove(file, rank, file - dist, rank - dist, 'n'));
                 if (getColor(file - dist, rank - dist) != 0) {
                     break;
                 }
@@ -289,7 +309,7 @@ public class newBoard {
         // Going up-left
         for (int dist = 1; file - dist >= 0 && rank + dist < 8; dist++) {
             if (getColor(file - dist, rank + dist) != color) {
-                moves.add(new newMove(file, rank, file - dist, rank + dist));
+                moves.add(new newMove(file, rank, file - dist, rank + dist, 'n'));
                 if (getColor(file - dist, rank + dist) != 0) {
                     break;
                 }
@@ -308,7 +328,7 @@ public class newBoard {
         // Going up
         for (int dist = 1; rank + dist < 8; dist++) {
             if (getColor(file, rank + dist) != color) {
-                moves.add(new newMove(file, rank, file, rank + dist));
+                moves.add(new newMove(file, rank, file, rank + dist, 'n'));
                 if (getColor(file, rank + dist) != 0) {
                     break;
                 }
@@ -320,7 +340,7 @@ public class newBoard {
         // Going right
         for (int dist = 1; file + dist < 8; dist++) {
             if (getColor(file + dist, rank) != color) {
-                moves.add(new newMove(file, rank, file + dist, rank));
+                moves.add(new newMove(file, rank, file + dist, rank, 'n'));
                 if (getColor(file + dist, rank) != 0) {
                     break;
                 }
@@ -332,7 +352,7 @@ public class newBoard {
         // Going down
         for (int dist = 1; rank - dist >= 0; dist++) {
             if (getColor(file, rank - dist) != color) {
-                moves.add(new newMove(file, rank, file, rank - dist));
+                moves.add(new newMove(file, rank, file, rank - dist, 'n'));
                 if (getColor(file, rank - dist) != 0) {
                     break;
                 }
@@ -344,7 +364,7 @@ public class newBoard {
         // Going left
         for (int dist = 1; file - dist >= 0; dist++) {
             if (getColor(file - dist, rank) != color) {
-                moves.add(new newMove(file, rank, file - dist, rank));
+                moves.add(new newMove(file, rank, file - dist, rank, 'n'));
                 if (getColor(file - dist, rank) != 0) {
                     break;
                 }
@@ -356,7 +376,7 @@ public class newBoard {
         // Going up-right
         for (int dist = 1; file + dist < 8 && rank + dist < 8; dist++) {
             if (getColor(file + dist, rank + dist) != color) {
-                moves.add(new newMove(file, rank, file + dist, rank + dist));
+                moves.add(new newMove(file, rank, file + dist, rank + dist, 'n'));
                 if (getColor(file + dist, rank + dist) != 0) {
                     break;
                 }
@@ -368,7 +388,7 @@ public class newBoard {
         // Going down-right
         for (int dist = 1; file + dist < 8 && rank - dist >= 0; dist++) {
             if (getColor(file + dist, rank - dist) != color) {
-                moves.add(new newMove(file, rank, file + dist, rank - dist));
+                moves.add(new newMove(file, rank, file + dist, rank - dist, 'n'));
                 if (getColor(file + dist, rank - dist) != 0) {
                     break;
                 }
@@ -380,7 +400,7 @@ public class newBoard {
         // Going down-left
         for (int dist = 1; file - dist >= 0 && rank - dist >= 0; dist++) {
             if (getColor(file - dist, rank - dist) != color) {
-                moves.add(new newMove(file, rank, file - dist, rank - dist));
+                moves.add(new newMove(file, rank, file - dist, rank - dist, 'n'));
                 if (getColor(file - dist, rank - dist) != 0) {
                     break;
                 }
@@ -392,7 +412,7 @@ public class newBoard {
         // Going up-left
         for (int dist = 1; file - dist >= 0 && rank + dist < 8; dist++) {
             if (getColor(file - dist, rank + dist) != color) {
-                moves.add(new newMove(file, rank, file - dist, rank + dist));
+                moves.add(new newMove(file, rank, file - dist, rank + dist, 'n'));
                 if (getColor(file - dist, rank + dist) != 0) {
                     break;
                 }
@@ -410,47 +430,60 @@ public class newBoard {
 
         // Going up
         if (rank < 7 && getColor(file, rank + 1) != color) {
-            moves.add(new newMove(file, rank, file, rank + 1));
+            moves.add(new newMove(file, rank, file, rank + 1, 'n'));
         }
 
         // Going up-right
         if (file < 7 && rank < 7 && getColor(file + 1, rank + 1) != color) {
-            moves.add(new newMove(file, rank, file + 1, rank + 1));
+            moves.add(new newMove(file, rank, file + 1, rank + 1, 'n'));
         }
 
         // Going right
         if (file < 7 && getColor(file + 1, rank) != color) {
-            moves.add(new newMove(file, rank, file + 1 ,rank));
+            moves.add(new newMove(file, rank, file + 1 ,rank, 'n'));
         }
 
         // Going down-right
         if (file < 7 && rank > 0 && getColor(file + 1, rank - 1) != color) {
-            moves.add(new newMove(file, rank, file + 1, rank - 1));
+            moves.add(new newMove(file, rank, file + 1, rank - 1, 'n'));
         }
 
         // Going down
         if (rank > 0 && getColor(file, rank - 1) != color) {
-            moves.add(new newMove(file, rank, file, rank - 1));
+            moves.add(new newMove(file, rank, file, rank - 1, 'n'));
         }
 
         // Going down-left
         if (file > 0 && rank > 0 && getColor(file - 1, rank - 1) != color) {
-            moves.add(new newMove(file, rank, file - 1, rank - 1));
+            moves.add(new newMove(file, rank, file - 1, rank - 1, 'n'));
         }
 
         // Going left
         if (file > 0 && getColor(file - 1, rank) != color) {
-            moves.add(new newMove(file, rank, file - 1, rank));
+            moves.add(new newMove(file, rank, file - 1, rank, 'n'));
         }
 
         // Going up-left
         if (file > 0 && rank < 7 && getColor(file - 1, rank + 1) != color) {
-            moves.add(new newMove(file, rank, file - 1, rank + 1));
+            moves.add(new newMove(file, rank, file - 1, rank + 1, 'n'));
         }
 
-        // TODO: Implement castling
-        if ((color == 'W' && file == 4 && rank == 0) || (color == 'B' && file == 4 && rank == 7)) {
-            int x = 4;
+        // King-side castle
+        if (whiteTurn && !whiteKingMoved && !whiteHRookMoved &&
+                getPiece(5, 0) == 0 && getPiece(6, 0) == 0) {
+            moves.add(new newMove(file, rank, file, rank, 'k'));
+        } else if (!whiteTurn && !blackKingMoved && !blackHRookMoved &&
+                getPiece(5, 7) == 0 && getPiece(6, 7) == 0) {
+            moves.add(new newMove(file, rank, file, rank, 'k'));
+        }
+
+        // Queen-side castle
+        if (whiteTurn && !whiteKingMoved && !whiteARookMoved &&
+                getPiece(3, 0) == 0 && getPiece(2, 0) == 0 && getPiece(1, 0) == 0) {
+            moves.add(new newMove(file, rank, file, rank, 'q'));
+        } else if (!whiteTurn && !blackKingMoved && !blackHRookMoved &&
+                getPiece(3, 7) == 0 && getPiece(2, 7) == 0 && getPiece(1, 7) == 0) {
+            moves.add(new newMove(file, rank, file, rank, 'q'));
         }
 
         return moves;
