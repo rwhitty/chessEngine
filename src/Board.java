@@ -1,4 +1,6 @@
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class Board {
     public char[][] pieces;
@@ -55,8 +57,12 @@ public class Board {
         // TODO: Can't castle through check
         if (move.specialType == 'k') {
             doKingSide();
+            return;
         } else if (move.specialType == 'q') {
             doQueenSide();
+            return;
+        } else if (move.specialType == 'p') {
+            this.pieces[move.oldFile][move.oldRank] = 'Q'; // TODO: Promotions other than queen
         }
         this.pieces[move.newFile][move.newRank] = this.pieces[move.oldFile][move.oldRank];
         this.colors[move.newFile][move.newRank] = this.colors[move.oldFile][move.oldRank];
@@ -126,34 +132,48 @@ public class Board {
 
     private ArrayList<Move> getPawnMoves(int file, int rank) {
         ArrayList<Move> moves = new ArrayList<>();
+        char specialType;
 
         if (getColor(file, rank) == 'W') {
+
+            if (rank < 6) {
+                specialType = 'n';
+            } else {
+                specialType = 'p';
+            }
+
             if (rank < 7 && getPiece(file, rank + 1) == 0) {
-                // TODO: Implement promotion
-                moves.add(new Move(file, rank, file, rank + 1, 'n'));
+                moves.add(new Move(file, rank, file, rank + 1, specialType));
             }
             if (rank == 1 && getPiece(file, rank + 1) == 0 && getPiece(file, rank + 2) == 0) {
-                moves.add(new Move(file, rank, file, rank + 2, 'n'));
+                moves.add(new Move(file, rank, file, rank + 2, specialType));
             }
             if (rank < 7 && file > 0 && getColor(file - 1, rank + 1) == 'B') {
-                moves.add(new Move(file, rank, file - 1, rank + 1, 'n'));
+                moves.add(new Move(file, rank, file - 1, rank + 1, specialType));
             }
             if (rank < 7 && file < 7 && getColor(file + 1, rank + 1) == 'B') {
-                moves.add(new Move(file, rank, file + 1, rank + 1, 'n'));
+                moves.add(new Move(file, rank, file + 1, rank + 1, specialType));
             }
             // TODO: Implement en passant
         } else {
+
+            if (rank > 1) {
+                specialType = 'n';
+            } else {
+                specialType = 'p';
+            }
+
             if (rank > 0 && getPiece(file, rank - 1) == 0) {
-                moves.add(new Move(file, rank, file, rank - 1, 'n'));
+                moves.add(new Move(file, rank, file, rank - 1, specialType));
             }
             if (rank == 6 && getPiece(file, rank - 1) == 0 && getPiece(file, rank - 2) == 0) {
-                moves.add(new Move(file, rank, file, rank - 2, 'n'));
+                moves.add(new Move(file, rank, file, rank - 2, specialType));
             }
             if (rank > 0 && file > 0 && getColor(file - 1, rank - 1) == 'W') {
-                moves.add(new Move(file, rank, file - 1, rank - 1, 'n'));
+                moves.add(new Move(file, rank, file - 1, rank - 1, specialType));
             }
             if (rank > 0 && file < 7 && getColor(file + 1, rank - 1) == 'W') {
-                moves.add(new Move(file, rank, file + 1, rank - 1, 'n'));
+                moves.add(new Move(file, rank, file + 1, rank - 1, specialType));
             }
         }
 
@@ -518,5 +538,62 @@ public class Board {
             this.pieces[3][7] = 'R';
             this.colors[3][7] = 'B';
         }
+    }
+
+    public boolean kingPresent(char color) {
+        if (color == 'W') {
+            for (int file = 0; file < 8; file++) {
+                for (int rank = 0; rank < 8; rank++) {
+                    if (this.pieces[file][rank] == 'K' && this.colors[file][rank] == color) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } else {
+            for (int file = 0; file < 8; file++) {
+                for (int rank = 7; rank >= 0; rank--) {
+                    if (this.pieces[file][rank] == 'K' && this.colors[file][rank] == color) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Board)) {
+            return false;
+        }
+        Board otherBoard = (Board) obj;
+        return Arrays.equals(this.pieces, otherBoard.pieces) && Arrays.equals(this.colors, otherBoard.colors) &&
+                this.gameState.equals(otherBoard.gameState);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(Arrays.deepHashCode(this.pieces), Arrays.deepHashCode(this.colors));
+    }
+
+    public char[][] piecesCopy() {
+        char[][] newPieces = new char[8][8];
+        for (int file = 0; file < 8; file++) {
+            for (int rank = 0; rank < 8; rank++) {
+                newPieces[file][rank] = pieces[file][rank];
+            }
+        }
+        return newPieces;
+    }
+
+    public char[][] colorsCopy() {
+        char[][] newColors = new char[8][8];
+        for (int file = 0; file < 8; file++) {
+            for (int rank = 0; rank < 8; rank++) {
+                newColors[file][rank] = colors[file][rank];
+            }
+        }
+        return newColors;
     }
 }

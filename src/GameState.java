@@ -1,4 +1,4 @@
-public class GameState {
+public class GameState implements Cloneable {
     public boolean whiteTurn;
     public boolean whiteKingSide;
     public boolean blackKingSide;
@@ -15,5 +15,28 @@ public class GameState {
 
     public void takeTurn() {
         this.whiteTurn = !this.whiteTurn;
+    }
+
+    public GameState clone() {
+        GameState newState = new GameState();
+        newState.whiteTurn = this.whiteTurn;
+        newState.whiteKingSide = this.whiteKingSide;
+        newState.blackKingSide = this.blackKingSide;
+        newState.whiteQueenSide = this.whiteQueenSide;
+        newState.blackQueenSide = this.blackQueenSide;
+        return newState;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof GameState)) {
+            return false;
+        }
+        GameState otherState = (GameState) obj;
+        return (this.whiteTurn == otherState.whiteTurn) &&
+                (this.whiteKingSide == otherState.whiteKingSide) &&
+                (this.blackKingSide == otherState.blackKingSide) &&
+                (this.whiteQueenSide == otherState.whiteQueenSide) &&
+                (this.blackQueenSide == otherState.blackQueenSide);
     }
 }
