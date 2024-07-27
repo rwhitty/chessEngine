@@ -1,126 +1,172 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class Board {
-    public char[][] pieces;
-    public GameState gameState;
+    public char[] boardState;
     public int evaluation;
 
     public Board() {
-        pieces = new char[8][8];
+        boardState = new char[72];
 
-        this.pieces[0][0] = 'R';
-        this.pieces[1][0] = 'N';
-        this.pieces[2][0] = 'B';
-        this.pieces[3][0] = 'Q';
-        this.pieces[4][0] = 'K';
-        this.pieces[5][0] = 'B';
-        this.pieces[6][0] = 'N';
-        this.pieces[7][0] = 'R';
+        boardState[0] = 'R';
+        boardState[1] = 'N';
+        boardState[2] = 'B';
+        boardState[3] = 'Q';
+        boardState[4] = 'K';
+        boardState[5] = 'B';
+        boardState[6] = 'N';
+        boardState[7] = 'R';
 
-        // Black back rank
-        this.pieces[0][7] = 'r';
-        this.pieces[1][7] = 'n';
-        this.pieces[2][7] = 'b';
-        this.pieces[3][7] = 'q';
-        this.pieces[4][7] = 'k';
-        this.pieces[5][7] = 'b';
-        this.pieces[6][7] = 'n';
-        this.pieces[7][7] = 'r';
+        boardState[56] = 'r';
+        boardState[57] = 'n';
+        boardState[58] = 'b';
+        boardState[59] = 'q';
+        boardState[60] = 'k';
+        boardState[61] = 'b';
+        boardState[62] = 'n';
+        boardState[63] = 'r';
 
-        for (int file = 0; file < 8; file++) {
-            this.pieces[file][1] = 'P';
-            this.pieces[file][6] = 'p';
+        for (int i = 8; i < 16; i++) {
+            boardState[i] = 'P';
+            boardState[i + 40] = 'p';
         }
 
-        this.gameState = new GameState();
-        this.gameState.whiteTurn = true;
+        boardState[64] = 1; // white turn (0 is black)
+        boardState[65] = 1; // white king-side castle legal
+        boardState[66] = 1; // white queen-side castle legal
+        boardState[67] = 1; // black king-side castle legal
+        boardState[68] = 1; // black queen-side castle legal
+        boardState[69] = 0; // Row for en-passant
+        boardState[70] = 1; // white king present
+        boardState[71] = 1; // black king present
+
+        evaluation = 0;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof Board)) {
+            return false;
+        }
+        return Arrays.equals(boardState, ((Board) other).boardState);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(boardState);
     }
 
     @Override
     public Board clone() {
-        Board newBoard = new Board();
-        for (int file = 0; file < 8; file++) {
-            System.arraycopy(this.pieces[file], 0, newBoard.pieces[file], 0, 8);
-        }
-        newBoard.gameState = this.gameState.clone();
-        return newBoard;
+        Board clone = new Board();
+        System.arraycopy(boardState, 0, clone.boardState, 0, boardState.length);
+        clone.evaluation = evaluation;
+        return clone;
     }
 
-    /**
-     * Returns an upper-case character representing the color of the piece at (file, rank)
-     * 'W' if white, 'B' if black, 0 if neither
-     **/
+    public String boardCode() {
+        return Arrays.toString(boardState);
+    }
+
+    public void printBoard() {
+        for (int rank = 0; rank < 8; rank++) {
+            for (int file = 0; file < 8; file++) {
+                if (getPiece(file, rank) != 0)
+                    System.out.print(getPiece(file, rank));
+                else
+                    System.out.print('_');
+                System.out.print(' ');
+            }
+            System.out.println();
+        }
+    }
+
+    public char getPiece(int file, int rank) {
+        return boardState[8 * rank + file];
+    }
+
     public char getColor(int file, int rank) {
-        char piece = this.pieces[file][rank];
+        char piece = boardState[8 * rank + file];
         if (piece == 0) {
             return 0;
-        } else if (!Character.isLowerCase(piece)) {
+        } else if (piece == 'p' || piece == 'n' || piece == 'b' ||
+                piece == 'r' || piece == 'q' || piece == 'k') {
+            return 'B';
+        } else {
             return 'W';
         }
-        return 'B';
     }
 
-    /**
-     * Returns an upper-case character representing the type of piece at (file, rank)
-     * 'P' for pawn, 'N' for knight, 'B' for bishop, 'R' for rook, 'Q' for queen, 'K' for king
-     */
-    public char getPiece(int file, int rank) {
-        return Character.toUpperCase(this.pieces[file][rank]);
+    public void placePiece(int file, int rank, char piece) {
+        boardState[8 * rank + file] = piece;
+    }
+
+    public boolean whiteTurn() {
+        return boardState[64] == 1;
+    }
+
+    public boolean kingMissing(char color) {
+        if (color == 'W') {
+            return boardState[70] != 1;
+        } else {
+            return boardState[71] != 1;
+        }
     }
 
     public void doMove(Move move) {
-        // TODO: Can't castle through check
+
         if (move.specialType == 'k') {
-            doKingSide();
-        } else if (move.specialType == 'q') {
-            doQueenSide();
-        } else if (move.specialType == 'p') {
-            this.pieces[move.oldFile][move.oldRank] = 0;
-            this.pieces[move.newFile][move.newRank] = 'Q'; // TODO: Promotions for both colors
-        } else {
-            this.evaluation -= evaluatePiece(move.newFile, move.newRank);
-            this.pieces[move.newFile][move.newRank] = this.pieces[move.oldFile][move.oldRank];
-            this.pieces[move.oldFile][move.oldRank] = 0;
+            // King-side castle
+            updateGameState(move);
 
-            if (move.oldFile == 7 && move.oldRank == 0 || move.oldFile == 4 && move.oldRank == 0) {
-                this.gameState.whiteKingSide = false;
-            } else if (move.oldFile == 0 && move.oldRank == 0 || move.oldFile == 4 && move.oldRank == 0) {
-                this.gameState.whiteQueenSide = false;
-            } else if (move.oldFile == 7 && move.oldRank == 7 || move.oldFile == 4 && move.oldRank == 7) {
-                this.gameState.blackKingSide = false;
-            } else if (move.oldFile == 0 && move.oldRank == 7 || move.oldFile == 4 && move.oldRank == 7) {
-                this.gameState.blackQueenSide = false;
+            if (getColor(move.oldFile, move.oldRank) == 'W') {
+                placePiece(4, 0, (char) 0);
+                placePiece(6, 0, 'K');
+                placePiece(7, 0, (char) 0);
+                placePiece(5, 0, 'R');
+                boardState[65] = 0;
+            } else {
+                placePiece(4, 7, (char) 0);
+                placePiece(6, 7, 'k');
+                placePiece(7, 7, (char) 0);
+                placePiece(5, 7, 'r');
+                boardState[67] = 0;
             }
-        }
-        this.gameState.takeTurn();
-    }
+        } else if (move.specialType == 'q') {
+            updateGameState(move);
 
-    public double evaluatePiece(int file, int rank) {
-        double evaluation;
-        char piece = getPiece(file, rank);
+            if (getColor(move.oldFile, move.oldRank) == 'W') {
+                placePiece(4, 0, (char) 0);
+                placePiece(2, 0, 'K');
+                placePiece(0, 0, (char) 0);
+                placePiece(3, 0, 'R');
+                boardState[66] = 0;
+            } else {
+                placePiece(4, 7, (char) 0);
+                placePiece(2, 7, 'k');
+                placePiece(0, 7, (char) 0);
+                placePiece(3, 7, 'r');
+                boardState[68] = 0;
+            }
+        } else if (move.specialType == 'p') {
 
-        if (piece == 0) {
-            evaluation = 0;
-        } else if (piece == 'P') {
-            evaluation = 100;
-        } else if (piece == 'R') {
-            evaluation = 563;
-        } else if (piece == 'N') {
-            evaluation = 305;
-        } else if (piece == 'B') {
-            evaluation = 333;
-        } else if (piece == 'Q') {
-            evaluation = 950;
+            if (getColor(move.oldFile, move.oldRank) == 'W') {
+                placePiece(move.oldFile, move.oldRank, 'Q');
+                evaluation += 835;
+            } else {
+                placePiece(move.oldFile, move.oldRank, 'q');
+                evaluation -= 835;
+            }
+            move.specialType = 'n';
+            doMove(move);
         } else {
-            evaluation = 100000;
+            updateGameState(move);
+            char movingPiece = getPiece(move.oldFile, move.oldRank);
+            placePiece(move.oldFile, move.oldRank, (char) 0);
+            placePiece(move.newFile, move.newRank, movingPiece);
         }
-
-        if (getColor(file, rank) == 'B') {
-            evaluation = -1 * evaluation;
-        }
-
-        return evaluation;
     }
 
     public ArrayList<Move> getMoves(char color) {
@@ -131,26 +177,33 @@ public class Board {
 
                 char piece = getPiece(file, rank);
                 if (getColor(file, rank) == color) {
-                    if (piece == 'P') {
+                    if (piece == 'P' || piece == 'p') {
                         moves.addAll(getPawnMoves(file, rank));
-                    } else if (piece == 'R') {
+                    } else if (piece == 'R' || piece == 'r') {
                         moves.addAll(getRookMoves(file, rank));
-                    } else if (piece == 'N') {
+                    } else if (piece == 'N' || piece == 'n') {
                         moves.addAll(getKnightMoves(file, rank));
-                    } else if (piece == 'B') {
+                    } else if (piece == 'B' || piece == 'b') {
                         moves.addAll(getBishopMoves(file, rank));
-                    } else if (piece == 'Q') {
+                    } else if (piece == 'Q' || piece == 'q') {
                         moves.addAll(getQueenMoves(file, rank));
-                    } else if (piece == 'K') {
+                    } else if (piece == 'K' || piece == 'k') {
                         moves.addAll(getKingMoves(file, rank));
                     }
                 }
             }
         }
+
+        for (Move move: moves) {
+            move.evaluation = evaluate(move.newFile, move.newRank);
+        }
+
+        Collections.sort(moves, Comparator.comparingInt(Move::getPriority));
         return moves;
     }
 
     private ArrayList<Move> getPawnMoves(int file, int rank) {
+
         ArrayList<Move> moves = new ArrayList<>();
         char specialType;
 
@@ -200,64 +253,11 @@ public class Board {
         return moves;
     }
 
-    private ArrayList<Move> getRookMoves(int file, int rank) {
-        ArrayList<Move> moves = new ArrayList<>();
-        char color = getColor(file, rank);
-
-        // Going up
-        for (int dist = 1; rank + dist < 8; dist++) {
-            if (getColor(file, rank + dist) != color) {
-                moves.add(new Move(file, rank, file, rank + dist, 'n'));
-                if (getColor(file, rank + dist) != 0) {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        // Going right
-        for (int dist = 1; file + dist < 8; dist++) {
-            if (getColor(file + dist, rank) != color) {
-                moves.add(new Move(file, rank, file + dist, rank, 'n'));
-                if (getColor(file + dist, rank) != 0) {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        // Going down
-        for (int dist = 1; rank - dist >= 0; dist++) {
-            if (getColor(file, rank - dist) != color) {
-                moves.add(new Move(file, rank, file, rank - dist, 'n'));
-                if (getColor(file, rank - dist) != 0) {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        // Going left
-        for (int dist = 1; file - dist >= 0; dist++) {
-            if (getColor(file - dist, rank) != color) {
-                moves.add(new Move(file, rank, file - dist, rank, 'n'));
-                if (getColor(file - dist, rank) != 0) {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        return moves;
-    }
-
     private ArrayList<Move> getKnightMoves(int file, int rank) {
+
         ArrayList<Move> moves = new ArrayList<>();
         char color = getColor(file, rank);
+
         // Going up-up-right
         if (file + 1 < 8 && rank + 2 < 8 && getColor(file + 1, rank + 2) != color) {
             moves.add(new Move(file, rank, file + 1, rank + 2, 'n'));
@@ -302,6 +302,7 @@ public class Board {
     }
 
     private ArrayList<Move> getBishopMoves(int file, int rank) {
+
         ArrayList<Move> moves = new ArrayList<>();
         char color = getColor(file, rank);
 
@@ -356,7 +357,8 @@ public class Board {
         return moves;
     }
 
-    private ArrayList<Move> getQueenMoves(int file, int rank) {
+    private ArrayList<Move> getRookMoves(int file, int rank) {
+
         ArrayList<Move> moves = new ArrayList<>();
         char color = getColor(file, rank);
 
@@ -408,54 +410,13 @@ public class Board {
             }
         }
 
-        // Going up-right
-        for (int dist = 1; file + dist < 8 && rank + dist < 8; dist++) {
-            if (getColor(file + dist, rank + dist) != color) {
-                moves.add(new Move(file, rank, file + dist, rank + dist, 'n'));
-                if (getColor(file + dist, rank + dist) != 0) {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
+        return moves;
+    }
 
-        // Going down-right
-        for (int dist = 1; file + dist < 8 && rank - dist >= 0; dist++) {
-            if (getColor(file + dist, rank - dist) != color) {
-                moves.add(new Move(file, rank, file + dist, rank - dist, 'n'));
-                if (getColor(file + dist, rank - dist) != 0) {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        // Going down-left
-        for (int dist = 1; file - dist >= 0 && rank - dist >= 0; dist++) {
-            if (getColor(file - dist, rank - dist) != color) {
-                moves.add(new Move(file, rank, file - dist, rank - dist, 'n'));
-                if (getColor(file - dist, rank - dist) != 0) {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        // Going up-left
-        for (int dist = 1; file - dist >= 0 && rank + dist < 8; dist++) {
-            if (getColor(file - dist, rank + dist) != color) {
-                moves.add(new Move(file, rank, file - dist, rank + dist, 'n'));
-                if (getColor(file - dist, rank + dist) != 0) {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
+    private ArrayList<Move> getQueenMoves(int file, int rank) {
+        ArrayList<Move> moves = new ArrayList<>();
+        moves.addAll(getBishopMoves(file, rank));
+        moves.addAll(getRookMoves(file, rank));
         return moves;
     }
 
@@ -504,90 +465,101 @@ public class Board {
         }
 
         // King-side castle
-        if (color == 'W' && gameState.whiteKingSide &&
-                getPiece(5, 0) == 0 && getPiece(6, 0) == 0) {
-            moves.add(new Move(file, rank, file, rank, 'k'));
-        } else if (color == 'B' && gameState.blackKingSide &&
-                getPiece(5, 7) == 0 && getPiece(6, 7) == 0) {
-            moves.add(new Move(file, rank, file, rank, 'k'));
+        if (kingSideLegal(color)) {
+            moves.add(new Move(file, rank, file + 2, rank, 'k'));
         }
 
         // Queen-side castle
-        if (color == 'W' && gameState.whiteQueenSide &&
-                getPiece(3, 0) == 0 && getPiece(2, 0) == 0 && getPiece(1, 0) == 0) {
-            moves.add(new Move(file, rank, file, rank, 'q'));
-        } else if (color == 'B' && gameState.blackQueenSide &&
-                getPiece(3, 7) == 0 && getPiece(2, 7) == 0 && getPiece(1, 7) == 0) {
-            moves.add(new Move(file, rank, file, rank, 'q'));
+        if (queenSideLegal(color)) {
+            moves.add(new Move(file, rank, file - 2, rank, 'q'));
         }
 
         return moves;
     }
 
-    private void doKingSide() {
-        if (this.gameState.whiteTurn) {
-            this.pieces[4][0] = 0;
-            this.pieces[6][0] = 'K';
-            this.pieces[7][0] = 0;
-            this.pieces[5][0] = 'R';
-        } else {
-            this.pieces[4][7] = 0;
-            this.pieces[6][7] = 'k';
-            this.pieces[7][7] = 0;
-            this.pieces[5][7] = 'r';
-        }
-    }
-
-    private void doQueenSide() {
-        if (this.gameState.whiteTurn) {
-            this.pieces[4][0] = 0;
-            this.pieces[2][0] = 'K';
-            this.pieces[0][0] = 0;
-            this.pieces[3][0] = 'R';
-        } else {
-            this.pieces[4][7] = 0;
-            this.pieces[2][7] = 'k';
-            this.pieces[0][7] = 0;
-            this.pieces[3][7] = 'r';
-        }
-    }
-
-    public boolean kingPresent(char color) {
+    private boolean kingSideLegal(char color) {
+        // TODO: Need to check for castling through check
         if (color == 'W') {
-            for (int file = 0; file < 8; file++) {
-                for (int rank = 0; rank < 8; rank++) {
-                    if (getPiece(file, rank) == 'K' && getColor(file, rank) == color) {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return boardState[65] == 1 &&
+                    boardState[5] == 0 &&
+                    boardState[6] == 0;
         } else {
-            for (int file = 0; file < 8; file++) {
-                for (int rank = 7; rank >= 0; rank--) {
-                    if (getPiece(file, rank) == 'K' && getColor(file, rank) == color) {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return boardState[67] == 1 &&
+                    boardState[61] == 0 &&
+                    boardState[62] == 0;
         }
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Board)) {
-            return false;
+    private boolean queenSideLegal(char color) {
+        // TODO: Need to check for castling through check
+        if (color == 'W') {
+            return boardState[66] == 1 &&
+                    boardState[3] == 0 &&
+                    boardState[2] == 0 &&
+                    boardState[1] == 0;
+        } else {
+            return boardState[68] == 1 &&
+                    boardState[59] == 0 &&
+                    boardState[58] == 0 &&
+                    boardState[57] == 0;
         }
-        Board otherBoard = (Board) obj;
-        return Arrays.deepEquals(this.pieces, otherBoard.pieces) &&
-                this.gameState.equals(otherBoard.gameState);
     }
 
-    @Override
-    public int hashCode() {
-        return Arrays.deepHashCode(this.pieces);
+    private void updateGameState(Move move) {
+
+        // Update king presence
+        char capturedPiece = getPiece(move.newFile, move.newRank);
+        if (capturedPiece == 'K') {
+            boardState[70] = 0;
+        } else if (capturedPiece == 'k') {
+            boardState[71] = 0;
+        }
+
+        // Update castle legality
+        if (move.oldFile == 4 && move.oldRank == 0) {
+            boardState[65] = 0;
+            boardState[66] = 0;
+        } else if (move.oldFile == 7 && move.oldRank == 0) {
+            boardState[65] = 0;
+        } else if (move.oldFile == 0 && move.oldRank == 0) {
+            boardState[66] = 0;
+        } else if (move.oldFile == 4 && move.oldRank == 7) {
+            boardState[67] = 0;
+            boardState[68] = 0;
+        } else if (move.oldFile == 7 && move.oldRank == 7) {
+            boardState[67] = 0;
+        } else if (move.oldFile == 0 && move.oldRank == 7) {
+            boardState[68] = 0;
+        }
+
+        evaluation -= evaluate(move.newFile, move.newRank);
+        boardState[64] = (char) (1 - boardState[64]);
     }
 
+    private int evaluate(int file, int rank) {
+
+        int evaluation = 0;
+        char piece = getPiece(file, rank);
+        char color = getColor(file, rank);
+
+        if (piece == 'P' || piece == 'p') {
+            evaluation = 100;
+        } else if (piece == 'N' || piece == 'n') {
+            evaluation = 305;
+        } else if (piece == 'B' || piece == 'b') {
+            evaluation = 333;
+        } else if (piece == 'R' || piece == 'r') {
+            evaluation = 563;
+        } else if (piece == 'Q' || piece == 'q') {
+            evaluation = 950;
+        } else if (piece == 'K' || piece == 'k') {
+            evaluation = 100000;
+        }
+
+        if (color == 'B') {
+            evaluation *= -1;
+        }
+
+        return evaluation;
+    }
 }
-

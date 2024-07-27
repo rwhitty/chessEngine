@@ -1,22 +1,22 @@
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 
 public class Engine {
     public Board board;
-    public static int maxDepth = 1;
-
+    public static int maxDepth = 7;
+    public HashMap<String, int[]> positions;
 
     public Engine() {
-        this.board = new Board();
+        board = new Board();
     }
 
     public void processMove(String moveString) {
 
         if (moveString.equals("kc")) {
-            this.board.doMove(new Move(0, 0, 0, 0, 'k'));
+            this.board.doMove(new Move(4, 0, 6, 0, 'k'));
             return;
         } else if (moveString.equals("qc")) {
-            this.board.doMove(new Move(0, 0, 0, 0, 'q'));
+            this.board.doMove(new Move(4, 0, 2, 0, 'q'));
             return;
         }
         int oldFile = (int) moveString.charAt(0) - 97;
@@ -27,6 +27,7 @@ public class Engine {
     }
 
     public String makeMove() {
+        positions = new HashMap<>();
         Move bestMove = getBestMove(maxDepth, -1000000, 1000000);
 
         this.board.doMove(bestMove);
@@ -40,11 +41,15 @@ public class Engine {
     }
 
     public Move getBestMove(int depth, double alpha, double beta) {
+        String boardCode = board.boardCode();
         if (depth <= 0) {
             // This is just a dummy move; all we care about is the evaluation
             Move onlyMove = new Move(0, 0, 0, 0, 'n');
-            onlyMove.evaluation = evaluateBoard(this.board);
-
+            onlyMove.evaluation = evaluateBoard();
+            return onlyMove;
+        } else if (depth < maxDepth && positions.containsKey(boardCode) && positions.get(boardCode)[1] >= depth) {
+            Move onlyMove = new Move(0, 0, 0, 0, 'n');
+            onlyMove.evaluation = positions.get(boardCode)[0];
             return onlyMove;
         }
 
@@ -52,48 +57,28 @@ public class Engine {
         Move bestMove = null;
 
         // TODO: Extend support to engine playing white
-        if (this.board.gameState.whiteTurn) {
+        if (board.whiteTurn()) {
             // Lost king
-            if (this.board.evaluation < -90000) {
+            if (board.kingMissing('W')) {
                 Move onlyMove = new Move(0, 0, 0, 0, 'n');
-                onlyMove.evaluation = -100000;
+                onlyMove.evaluation = -1000000;
                 return onlyMove;
             }
 
             moves = this.board.getMoves('W');
             for (Move move: moves) {
+                Board oldBoard = board.clone();
 
-                char oldPiece = board.pieces[move.oldFile][move.oldRank];
-                char newPiece = board.pieces[move.newFile][move.newRank];
-                int oldEval = board.evaluation;
-                // GameState oldState = board.gameState.clone();
-
-                this.board.doMove(move);
+                board.doMove(move);
                 Move currMove = getBestMove(depth - 1, alpha, beta);
 
-                if (move.specialType == 'k') {
-                    board.pieces[4][0] = 'K';
-                    board.pieces[6][0] = 0;
-                    board.pieces[7][0] = 'R';
-                    board.pieces[5][0] = 0;
-                } else if (move.specialType == 'q') {
-                    board.pieces[4][0] = 'K'; // TODO: Possible bug: is castling marked as impossible after castling?
-                    board.pieces[2][0] = 0;
-                    board.pieces[0][0] = 'R';
-                    board.pieces[3][0] = 0;
-                } else {
-                    board.pieces[move.oldFile][move.oldRank] = oldPiece;
-                    board.pieces[move.newFile][move.newRank] = newPiece;
-                    board.evaluation = oldEval;
-                    board.gameState.whiteTurn = true;
-                    // board.gameState = oldState;
-                }
+                board = oldBoard;
 
                 if (bestMove == null || currMove.evaluation > bestMove.evaluation) {
                     bestMove = move;
                     bestMove.evaluation = currMove.evaluation;
                 }
-                if (bestMove.evaluation > beta) {
+                if (bestMove.evaluation > beta - 1) {
                     break;
                 } else if (bestMove.evaluation > alpha) {
                     alpha = bestMove.evaluation;
@@ -101,53 +86,30 @@ public class Engine {
             }
         } else {
             // Lost king
-            if (this.board.evaluation > 90000) {
+            if (board.kingMissing('B')) {
                 Move onlyMove = new Move(0, 0, 0, 0, 'n');
-                onlyMove.evaluation = 100000;
+                onlyMove.evaluation = 1000000;
                 return onlyMove;
             }
 
-            moves = this.board.getMoves('B');
+            moves = board.getMoves('B');
+            for (Move move: moves) {
+                Board oldBoard = board.clone();
 
-            for (Move move : moves) {
-
-                int oldEval = board.evaluation;
-                char oldPiece = board.pieces[move.oldFile][move.oldRank];
-                char newPiece = board.pieces[move.newFile][move.newRank];
-                // GameState oldState = board.gameState.clone();
-
-                this.board.doMove(move);
+                board.doMove(move);
                 Move currMove = getBestMove(depth - 1, alpha, beta);
 
-                if (move.specialType == 'k') {
-                    board.pieces[4][7] = 'k';
-                    board.pieces[6][7] = 0;
-                    board.pieces[7][7] = 'r';
-                    board.pieces[5][7] = 0;
-                } else if (move.specialType == 'q') {
-                    board.pieces[4][7] = 'k';
-                    board.pieces[2][7] = 0;
-                    board.pieces[0][7] = 'r';
-                    board.pieces[3][7] = 0;
-                } else {
-                    board.pieces[move.oldFile][move.oldRank] = oldPiece;
-                    board.pieces[move.newFile][move.newRank] = newPiece;
-                    board.evaluation = oldEval;
-                    board.gameState.whiteTurn = false;
-                    // board.gameState = oldState;
-                }
+                board = oldBoard;
 
                 if (depth == maxDepth) {
-                    System.out.println((char) (move.oldFile + 97) + Integer.toString(move.oldRank + 1) +
-                            " -> " + (char) (move.newFile + 97) + (move.newRank + 1));
-                    System.out.println(currMove.evaluation);
+                    System.out.print('#');
                 }
 
                 if (bestMove == null || currMove.evaluation < bestMove.evaluation) {
                     bestMove = move;
                     bestMove.evaluation = currMove.evaluation;
                 }
-                if (bestMove.evaluation < alpha ) {
+                if (bestMove.evaluation < alpha + 1) {
                     break;
                 } else if (bestMove.evaluation < beta) {
                     beta = bestMove.evaluation;
@@ -158,16 +120,24 @@ public class Engine {
         if (depth == maxDepth)
             System.out.println();
 
+        if (!positions.containsKey(boardCode) || positions.get(boardCode)[1] < depth) {
+            positions.put(boardCode, new int[]{bestMove.evaluation, depth});
+        }
+
         return bestMove;
     }
 
-
-    public int evaluateBoard(Board board) {
-
-        int evaluation = 0;
-        evaluation += board.evaluation;
-
+    private int evaluateBoard() {
+        int evaluation = board.evaluation;
+        for (int file = 0; file < 8; file++) {
+            for (int rank = 0; rank < 8; rank++) {
+                if (board.getPiece(file, rank) == 'p') {
+                    evaluation -= Constants.pawnValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'P') {
+                    evaluation += Constants.pawnValues[rank][file];
+                }
+            }
+        }
         return evaluation;
     }
-
 }

@@ -2,7 +2,6 @@ Current to-dos:
     - Implement castling through check
     - Implement pawn promotion for non-queens
     - Implement en-passant
-    - Switch to integer evals
     - Reduce number of board copies
     - Update evaluation function to include the following:
         - Pawn structure: Passed, isolated, doubled

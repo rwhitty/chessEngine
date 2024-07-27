@@ -13,5 +13,10 @@ public class Move {
         this.newFile = newFile;
         this.newRank = newRank;
         this.specialType = specialType;
+        this.evaluation = 0;
+    }
+
+    public int getPriority() {
+        return evaluation;
     }
 }
