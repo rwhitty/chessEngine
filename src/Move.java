@@ -4,7 +4,7 @@ public class Move {
     public int newFile;
     public int newRank;
     public char specialType;
-    public double evaluation;
+    public int evaluation;
 
     // specialType: 'k' for king-side castle, 'q' for queen-side castle, 'e' for en-passant, 'p' for promotion
     public Move(int oldFile, int oldRank, int newFile, int newRank, char specialType) {

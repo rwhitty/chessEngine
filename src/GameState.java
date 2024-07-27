@@ -17,6 +17,7 @@ public class GameState implements Cloneable {
         this.whiteTurn = !this.whiteTurn;
     }
 
+    @Override
     public GameState clone() {
         GameState newState = new GameState();
         newState.whiteTurn = this.whiteTurn;
