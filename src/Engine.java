@@ -132,9 +132,29 @@ public class Engine {
         for (int file = 0; file < 8; file++) {
             for (int rank = 0; rank < 8; rank++) {
                 if (board.getPiece(file, rank) == 'p') {
-                    evaluation -= Constants.pawnValues[rank][file];
+                    evaluation -= Constants.blackPawnValues[rank][file];
                 } else if (board.getPiece(file, rank) == 'P') {
-                    evaluation += Constants.pawnValues[rank][file];
+                    evaluation += Constants.whitePawnValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'n') {
+                    evaluation -= Constants.blackKnightValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'N') {
+                    evaluation += Constants.whiteKnightValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'b') {
+                    evaluation -= Constants.blackBishopValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'B') {
+                    evaluation += Constants.whiteBishopValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'r') {
+                    evaluation -= Constants.blackRookValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'R') {
+                    evaluation += Constants.whiteRookValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'q') {
+                    evaluation -= Constants.blackQueenValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'Q') {
+                    evaluation += Constants.whiteQueenValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'k') {
+                    evaluation -= Constants.blackKingValues[rank][file];
+                } else if (board.getPiece(file, rank) == 'K') {
+                    evaluation += Constants.whiteKingValues[rank][file];
                 }
             }
         }

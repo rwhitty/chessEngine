@@ -9,7 +9,6 @@ public class Main {
             System.out.println("Enter the file (lowercase) of the piece you want to move:");
             String oldFile = scanner.nextLine();
             if (oldFile.equals("kc") || oldFile.equals("qc")) {
-                System.out.println("HERE");
                 engine.processMove(oldFile);
                 String engineMove = engine.makeMove();
                 System.out.println("Engine's move: " + engineMove);
